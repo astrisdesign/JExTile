@@ -9,7 +9,7 @@ The application reimagines standard file tree navigation as a recursive drill-do
 ### Headless Architecture
 To support this recursive, high-depth navigation efficiently, HolonDeck utilizes a **Headless Architecture** that decouples the data source from the UI.
 *   **Backend (Rust):** Acts as a "JSON Database." It persists the document in a thread-safe state container and uses standard pointer logic (RFC 6901) to read and write specific nodes with O(1)-like access, rather than traversing the entire tree for every operation.
-*   **Frontend (React + Zustand):** Acts strictly as a "Viewport Cache." Instead of mirroring the entire document, the frontend store maintains a navigation stack and maps specific file paths to loaded data, fetching only what is currently visible.
+*   **Frontend (React + Zustand + Tailwind):** Acts strictly as a "Viewport Cache." Instead of mirroring the entire document, the frontend store maintains a navigation stack and maps specific file paths to loaded data, fetching only what is currently visible.
 
 ### The Data Protocol
 To facilitate lazy loading and fluid navigation, the communication between the Rust backend and React frontend relies on a strict separation of data types:
