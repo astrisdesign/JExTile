@@ -224,6 +224,32 @@ const App: React.FC = () => {
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
 
+  // Ctrl+Scroll font-size scaling
+  useEffect(() => {
+    let fontSize = 16; // Default browser base size (px)
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault(); // Prevent native browser zoom/scroll
+        
+        // Determine direction and apply smooth step
+        // Normalize delta to handle both trackpads and mouse wheels
+        const direction = e.deltaY > 0 ? -1 : 1;
+        const step = 1; 
+        
+        // Clamp between 8px (50%) and 32px (200%)
+        fontSize = Math.min(Math.max(8, fontSize + (direction * step)), 32);
+        
+        document.documentElement.style.fontSize = `${fontSize}px`;
+      }
+    };
+
+    // { passive: false } is required to use preventDefault() on wheel events
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
+
   return (
     <div className="min-h-screen bg-base text-text-main font-sans selection:bg-accent/20 selection:text-accent">
       {/* Header */}
