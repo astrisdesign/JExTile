@@ -39,7 +39,7 @@ const JsonGrid: React.FC<JsonGridProps> = ({ file, onUpdate }) => {
   const anchorIndexRef = useRef<number | null>(null);
   
   // Drag State
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   
   // Deterministic drag data (bypasses React state for reliability)
