@@ -261,16 +261,20 @@ const JsonGrid: React.FC<JsonGridProps> = ({ file, onUpdate }) => {
           return;
       }
       
-      // If dragging an item NOT in the current selection, select it first
-      // This mimics standard OS behavior (drag unselected -> select only that item)
-      if (!selectedIndices.has(index)) {
-          setSelectedIndices(new Set([index]));
-          setFocusedIndex(index);
-          anchorIndexRef.current = index;
-      }
-      
-      setDraggedIndex(index);
+      // CRITICAL: Set data immediately for WebView compatibility
       e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData("text/plain", index.toString());
+      
+      // CRITICAL: Defer state updates to next tick. 
+      // Updating state immediately triggers a re-render that kills the drag source in WebViews.
+      requestAnimationFrame(() => {
+          if (!selectedIndices.has(index)) {
+              setSelectedIndices(new Set([index]));
+              setFocusedIndex(index);
+              anchorIndexRef.current = index;
+          }
+          setDraggedIndex(index);
+      });
   };
 
   const onDragOver = (e: React.DragEvent) => {
