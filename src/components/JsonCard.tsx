@@ -36,9 +36,24 @@ const JsonCard: React.FC<JsonCardProps> = ({
   onDetailsClick,
   onDelete
 }) => {
-  const { showTitle, showSubtitle } = useSettingsStore();
+  const { showTitle, showSubtitle, titleKey, subtitleKey } = useSettingsStore();
 
-  // Generate preview string
+  // Helper to resolve title/subtitle keys safely
+  const getHeaderKeys = () => {
+    if (typeof data !== 'object' || data === null || Array.isArray(data)) return { titleK: undefined, subtitleK: undefined };
+
+    const allKeys = Object.keys(data);
+    const titleK = showTitle ? allKeys.find(k => k.toLowerCase() === titleKey.toLowerCase()) : undefined;
+    const subtitleK = showSubtitle ? allKeys.find(k => k.toLowerCase() === subtitleKey.toLowerCase()) : undefined;
+
+    return { titleK, subtitleK };
+  };
+
+  const { titleK, subtitleK } = getHeaderKeys();
+  const titleValue = titleK && (data as any)[titleK] ? String((data as any)[titleK]) : undefined;
+  const subtitleValue = subtitleK && (data as any)[subtitleK] ? String((data as any)[subtitleK]) : undefined;
+
+  // Generate preview string (fallback if no title)
   const rawString = JSON.stringify(data);
   const preview = rawString.slice(0, 30) + (rawString.length > 30 ? '...' : '');
 
@@ -131,34 +146,14 @@ const JsonCard: React.FC<JsonCardProps> = ({
 
     // Object logic for card body
     const allKeys = Object.keys(data);
-    const { titleKey, subtitleKey } = useSettingsStore();
 
-    // Identify Title and Subtitle if settings are enabled
-    // Use the dynamic keys from store instead of hardcoded strings
-    const foundTitleKey = showTitle ? allKeys.find(k => k.toLowerCase() === titleKey.toLowerCase()) : undefined;
-    const foundSubtitleKey = showSubtitle ? allKeys.find(k => k.toLowerCase() === subtitleKey.toLowerCase()) : undefined;
-
-    const bodyKeys = allKeys.slice(0, 6);
-    const remainingCount = Math.max(0, allKeys.length - bodyKeys.length);
+    // Filter out title and subtitle keys from body if they are being displayed in header
+    const bodyKeysCandidate = allKeys.filter(k => k !== titleK && k !== subtitleK);
+    const bodyKeys = bodyKeysCandidate.slice(0, 6);
+    const remainingCount = Math.max(0, bodyKeysCandidate.length - bodyKeys.length);
 
     return (
       <div className="flex flex-col h-full gap-2">
-        {/* Custom Header Area */}
-        {(foundTitleKey || foundSubtitleKey) && (
-          <div className="mb-2 pb-2 border-b border-subtle/30">
-            {foundTitleKey && (data as any)[foundTitleKey] && (
-              <div className="text-lg font-bold text-text-main leading-snug">
-                {String((data as any)[foundTitleKey])}
-              </div>
-            )}
-            {foundSubtitleKey && (data as any)[foundSubtitleKey] && (
-              <div className="text-sm text-accent font-medium mt-0.5">
-                {String((data as any)[foundSubtitleKey])}
-              </div>
-            )}
-          </div>
-        )}
-
         {bodyKeys.length > 0 ? (
           <>
             {bodyKeys.map(key => (
@@ -179,7 +174,8 @@ const JsonCard: React.FC<JsonCardProps> = ({
           </>
         ) : (
           <div className="flex items-center justify-center h-full text-text-dim italic opacity-50">
-            <span>Empty Object</span>
+            {/* If we filtered everything out (e.g. only title/subtitle existed), show something to indicate valid object but no other props */}
+            <span>{allKeys.length > 0 ? 'Details in Header' : 'Empty Object'}</span>
           </div>
         )}
       </div>
@@ -221,8 +217,23 @@ const JsonCard: React.FC<JsonCardProps> = ({
         )}
         <span className="font-extrabold not-italic min-w-[1.5rem] truncate">{name}</span>
         <div className="h-3 w-0.5 bg-white/20 shrink-0"></div>
-        <span className="truncate font-bold">{preview}</span>
+        {/* If we have a valid titleValue, show it here. Otherwise show preview string. */}
+        {titleValue ? (
+          <span className="truncate font-bold text-text-main not-italic text-xs">{titleValue}</span>
+        ) : (
+          <span className="truncate font-bold">{preview}</span>
+        )}
       </div>
+
+      {/* Subtitle Row - Only if subtitleValue exists */}
+      {subtitleValue && (
+        <div className={`
+            px-3 py-1.5 border-b text-xs font-medium truncate
+             ${isSelected ? 'bg-accent/10 border-accent/20 text-accent-light' : 'bg-white/2 border-subtle/30 text-accent'}
+        `}>
+          {subtitleValue}
+        </div>
+      )}
 
       {/* Details Button */}
       <button
